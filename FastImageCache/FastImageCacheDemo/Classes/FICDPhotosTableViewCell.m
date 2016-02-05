@@ -27,7 +27,9 @@
 
 #pragma mark
 
-@implementation FICDPhotosTableViewCell
+@implementation FICDPhotosTableViewCell {
+    NSMutableArray *_operations;
+}
 
 @synthesize delegate = _delegate;
 @synthesize usesImageTable = _usesImageTable;
@@ -40,25 +42,46 @@
     if (photos != _photos) {
         _photos = [photos copy];
 
-        for (NSInteger i = 0; i < [_imageViews count]; i++) {
-            UIImageView *imageView = [_imageViews objectAtIndex:i];
+        for (NSOperation *operation in _operations) {
+            [operation cancel];
+        }
+        [_operations removeAllObjects];
 
-            if (i < [_photos count]) {
+        if (_usesImageTable) {
+            for (UIImageView *imageView in _imageViews) {
+                if (imageView.image) {
+                    [imageView setImage:nil];
+                }
+            }
+            for (NSInteger i = 0; i < [_photos count]; i++) {
+                UIImageView *imageView = [_imageViews objectAtIndex:i];
                 FICDPhoto *photo = [_photos objectAtIndex:i];
 
-                if (_usesImageTable) {
+                __block __weak NSBlockOperation *operation;
+                operation = [NSBlockOperation blockOperationWithBlock:^{
+                    if ([operation isCancelled]) {
+                        return;
+                    }
                     [[FICImageCache sharedImageCache] retrieveImageForEntity:photo withFormatName:_imageFormatName completionBlock:^(id<FICEntity> entity, NSString *formatName, UIImage *image) {
-                        // This completion block may be called much later. We should check to make sure this cell hasn't been reused for different photos before displaying the image that has loaded.
-                        if (photos == [self photos]) {
-                            [imageView setImage:image];
+                        if ([operation isCancelled]) {
+                            return;
                         }
+                        [imageView setImage:image];
+                        [_operations removeObject:operation];
                     }];
-                } else {
+                }];
+                [_operations addObject:operation];
+                [[NSOperationQueue mainQueue] addOperation:operation];
+            }
+        } else {
+            for (NSInteger i = 0; i < [_imageViews count]; i++) {
+                UIImageView *imageView = [_imageViews objectAtIndex:i];
+                if (i < [_photos count]) {
+                    FICDPhoto *photo = [_photos objectAtIndex:i];
                     [imageView setImage:[photo thumbnailImage]];
+                } else {
+                    [imageView setImage:nil];
                 }
-            } else {
-                // Last row might not be full
-                [imageView setImage:nil];
             }
         }
     }
@@ -115,6 +138,8 @@
         }
 
         _imageViews = [imageViews copy];
+
+        _operations = [NSMutableArray array];
     }
     
     return self;
