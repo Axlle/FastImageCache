@@ -10,11 +10,8 @@
 
 @class FICDPhoto;
 
-@protocol FICDPhotosTableViewCellDelegate;
-
 @interface FICDPhotosTableViewCell : UITableViewCell
 
-@property (nonatomic, weak) id <FICDPhotosTableViewCellDelegate> delegate;
 @property (nonatomic, assign) BOOL usesImageTable;
 @property (nonatomic, copy) NSArray *photos;
 @property (nonatomic, copy) NSString *imageFormatName;
@@ -23,12 +20,5 @@
 + (NSInteger)photosPerRow;
 + (CGFloat)outerPadding;
 + (CGFloat)rowHeight;
-
-@end
-
-@protocol FICDPhotosTableViewCellDelegate <NSObject>
-
-@required
-- (void)photosTableViewCell:(FICDPhotosTableViewCell *)photosTableViewCell didSelectPhoto:(FICDPhoto *)photo withImageView:(UIImageView *)imageView;
 
 @end

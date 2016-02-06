@@ -13,14 +13,12 @@
 
 #pragma mark Class Extension
 
-@interface FICDPhotosTableViewCell () <UIGestureRecognizerDelegate> {
-    __weak id <FICDPhotosTableViewCellDelegate> _delegate;
+@interface FICDPhotosTableViewCell () {
     BOOL _usesImageTable;
     NSArray *_photos;
     NSString *_imageFormatName;
     
     NSArray *_imageViews;
-    UITapGestureRecognizer *_tapGestureRecognizer;
 }
 
 @end
@@ -29,7 +27,6 @@
 
 @implementation FICDPhotosTableViewCell
 
-@synthesize delegate = _delegate;
 @synthesize usesImageTable = _usesImageTable;
 @synthesize photos = _photos;
 @synthesize imageFormatName = _imageFormatName;
@@ -101,8 +98,6 @@
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     
     if (self != nil) {
-        _tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_tapGestureRecognizerStateDidChange)];
-        [self addGestureRecognizer:_tapGestureRecognizer];
 
         NSInteger photosPerRow = [[self class] photosPerRow];
         NSMutableArray *imageViews = [[NSMutableArray alloc] initWithCapacity:photosPerRow];
@@ -124,10 +119,6 @@
     return [self initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
 }
 
-- (void)dealloc {
-    [_tapGestureRecognizer setDelegate:nil];
-}
-
 #pragma mark - Configuring the View Hierarchy
 
 - (void)layoutSubviews {
@@ -145,31 +136,6 @@
         [imageView setFrame:imageViewFrame];
 
         imageViewFrame.origin.x += imageViewFrame.size.width + innerPadding;
-    }
-}
-
-#pragma mark - Responding to User Interaction Events
-
-- (void)_tapGestureRecognizerStateDidChange {
-    if ([_tapGestureRecognizer state] == UIGestureRecognizerStateEnded) {
-        CGPoint tapLocationInSelf = [_tapGestureRecognizer locationInView:self];
-        UIImageView *selectedImageView = nil;
-        
-        for (UIImageView *imageView in _imageViews) {
-            CGRect imageViewFrame = [imageView frame];
-            BOOL frameContainsTapLocation = CGRectContainsPoint(imageViewFrame, tapLocationInSelf);
-            
-            if (frameContainsTapLocation) {
-                selectedImageView = imageView;
-            }
-        }
-        
-        if (selectedImageView != nil) {
-            NSUInteger imageViewIndex = [_imageViews indexOfObject:selectedImageView];
-            FICDPhoto *selectedPhoto = [_photos objectAtIndex:imageViewIndex];
-            
-            [_delegate photosTableViewCell:self didSelectPhoto:selectedPhoto withImageView:selectedImageView];
-        }
     }
 }
 

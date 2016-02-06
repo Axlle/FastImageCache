@@ -27,7 +27,6 @@
 		B2E567A21B316D9600906840 /* FICUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E567931B316D9600906840 /* FICUtilities.m */; };
 		B2E567AC1B316DCA00906840 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E567AB1B316DCA00906840 /* main.m */; };
 		B2E567DA1B316E1000906840 /* FICDAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E567CF1B316E1000906840 /* FICDAppDelegate.m */; };
-		B2E567DB1B316E1000906840 /* FICDFullscreenPhotoDisplayController.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E567D11B316E1000906840 /* FICDFullscreenPhotoDisplayController.m */; };
 		B2E567DC1B316E1000906840 /* FICDPhoto.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E567D31B316E1000906840 /* FICDPhoto.m */; };
 		B2E567DD1B316E1000906840 /* FICDPhotosTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E567D51B316E1000906840 /* FICDPhotosTableViewCell.m */; };
 		B2E567DE1B316E1000906840 /* FICDTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = B2E567D71B316E1000906840 /* FICDTableView.m */; };
@@ -80,8 +79,6 @@
 		B2E567AB1B316DCA00906840 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		B2E567CE1B316E1000906840 /* FICDAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FICDAppDelegate.h; sourceTree = "<group>"; };
 		B2E567CF1B316E1000906840 /* FICDAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FICDAppDelegate.m; sourceTree = "<group>"; };
-		B2E567D01B316E1000906840 /* FICDFullscreenPhotoDisplayController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FICDFullscreenPhotoDisplayController.h; sourceTree = "<group>"; };
-		B2E567D11B316E1000906840 /* FICDFullscreenPhotoDisplayController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FICDFullscreenPhotoDisplayController.m; sourceTree = "<group>"; };
 		B2E567D21B316E1000906840 /* FICDPhoto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FICDPhoto.h; sourceTree = "<group>"; };
 		B2E567D31B316E1000906840 /* FICDPhoto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FICDPhoto.m; sourceTree = "<group>"; };
 		B2E567D41B316E1000906840 /* FICDPhotosTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FICDPhotosTableViewCell.h; sourceTree = "<group>"; };
@@ -226,8 +223,6 @@
 			children = (
 				B2E567CE1B316E1000906840 /* FICDAppDelegate.h */,
 				B2E567CF1B316E1000906840 /* FICDAppDelegate.m */,
-				B2E567D01B316E1000906840 /* FICDFullscreenPhotoDisplayController.h */,
-				B2E567D11B316E1000906840 /* FICDFullscreenPhotoDisplayController.m */,
 				B2E567D21B316E1000906840 /* FICDPhoto.h */,
 				B2E567D31B316E1000906840 /* FICDPhoto.m */,
 				B2E567D41B316E1000906840 /* FICDPhotosTableViewCell.h */,
@@ -419,7 +414,6 @@
 				B2E567EC1B316E6600906840 /* FICImageTableEntry.m in Sources */,
 				B2E567DF1B316E1000906840 /* FICDViewController.m in Sources */,
 				B2E567DC1B316E1000906840 /* FICDPhoto.m in Sources */,
-				B2E567DB1B316E1000906840 /* FICDFullscreenPhotoDisplayController.m in Sources */,
 				B2E567DE1B316E1000906840 /* FICDTableView.m in Sources */,
 				B2E567E71B316E5F00906840 /* FICUtilities.m in Sources */,
 			);

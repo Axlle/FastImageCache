@@ -11,12 +11,11 @@
 #import "FICDTableView.h"
 #import "FICDAppDelegate.h"
 #import "FICDPhoto.h"
-#import "FICDFullscreenPhotoDisplayController.h"
 #import "FICDPhotosTableViewCell.h"
 
 #pragma mark Class Extension
 
-@interface FICDViewController () <UITableViewDataSource, UITableViewDelegate, UIAlertViewDelegate, FICDPhotosTableViewCellDelegate, FICDFullscreenPhotoDisplayControllerDelegate> {
+@interface FICDViewController () <UITableViewDataSource, UITableViewDelegate, UIAlertViewDelegate> {
     FICDTableView *_tableView;
     NSArray *_photos;
     
@@ -170,8 +169,7 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    
-    [[FICDFullscreenPhotoDisplayController sharedDisplayController] setDelegate:self];
+
     [self reloadTableViewAndScrollToTop:YES];
 }
 
@@ -311,73 +309,6 @@
     [self reloadTableViewAndScrollToTop:NO];
 }
 
-#pragma mark - Image Helper Functions
-
-static UIImage * _FICDColorAveragedImageFromImage(UIImage *image) {
-    // Crop the image to the area occupied by the status bar
-    CGSize imageSize = [image size];
-    CGSize statusBarSize = [[UIApplication sharedApplication] statusBarFrame].size;
-    CGRect cropRect = CGRectMake(0, 0, imageSize.width, statusBarSize.height);
-    
-    CGImageRef croppedImageRef = CGImageCreateWithImageInRect([image CGImage], cropRect);
-    UIImage *statusBarImage = [UIImage imageWithCGImage:croppedImageRef];
-    CGImageRelease(croppedImageRef);
-    
-    // Draw the cropped image into a 1x1 bitmap context; this automatically averages the color values of every pixel
-    CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
-    CGSize contextSize = CGSizeMake(1, 1);
-    CGContextRef bitmapContextRef = CGBitmapContextCreate(NULL, contextSize.width, contextSize.height, 8, 0, colorSpaceRef, (kCGImageAlphaNoneSkipFirst & kCGBitmapAlphaInfoMask));
-    CGContextSetInterpolationQuality(bitmapContextRef, kCGInterpolationMedium);
-    
-    CGRect drawRect = CGRectZero;
-    drawRect.size = contextSize;
-    
-    UIGraphicsPushContext(bitmapContextRef);
-    [statusBarImage drawInRect:drawRect];
-    UIGraphicsPopContext();
-    
-    // Create an image from the bitmap context
-    CGImageRef colorAveragedImageRef = CGBitmapContextCreateImage(bitmapContextRef);
-    UIImage *colorAveragedImage = [UIImage imageWithCGImage:colorAveragedImageRef];
-    
-    CGColorSpaceRelease(colorSpaceRef);
-    CGImageRelease(colorAveragedImageRef);
-    CGContextRelease(bitmapContextRef);
-    
-    return colorAveragedImage;
-}
-
-static BOOL _FICDImageIsLight(UIImage *image) {
-    BOOL imageIsLight = NO;
-    
-    CGImageRef imageRef = [image CGImage];
-    CGDataProviderRef dataProviderRef = CGImageGetDataProvider(imageRef);
-    NSData *pixelData = (__bridge_transfer NSData *)CGDataProviderCopyData(dataProviderRef);
-    
-    if ([pixelData length] > 0) {
-        const UInt8 *pixelBytes = [pixelData bytes];
-        
-        // Whether or not the image format is opaque, the first byte is always the alpha component, followed by RGB.
-        UInt8 pixelR = pixelBytes[1];
-        UInt8 pixelG = pixelBytes[2];
-        UInt8 pixelB = pixelBytes[3];
-        
-        // Calculate the perceived luminance of the pixel; the human eye favors green, followed by red, then blue.
-        double percievedLuminance = 1 - (((0.299 * pixelR) + (0.587 * pixelG) + (0.114 * pixelB)) / 255);
-        
-        imageIsLight = percievedLuminance < 0.5;
-    }
-    
-    return imageIsLight;
-}
-
-- (void)_updateStatusBarStyleForColorAveragedImage:(UIImage *)colorAveragedImage {
-    BOOL imageIsLight = _FICDImageIsLight(colorAveragedImage);
-    
-    UIStatusBarStyle statusBarStyle = imageIsLight ? UIStatusBarStyleDefault : UIStatusBarStyleLightContent;
-    [[UIApplication sharedApplication] setStatusBarStyle:statusBarStyle animated:YES];
-}
-
 #pragma mark - Working with Thumbnails
 
 - (void)_generateConventionalThumbnails {
@@ -465,7 +396,6 @@ static BOOL _FICDImageIsLight(UIImage *image) {
     FICDPhotosTableViewCell *tableViewCell = (FICDPhotosTableViewCell *)[table dequeueReusableCellWithIdentifier:reuseIdentifier forIndexPath:indexPath];
     tableViewCell.selectionStyle = UITableViewCellSeparatorStyleNone;
 
-    [tableViewCell setDelegate:self];
     [tableViewCell setImageFormatName:_imageFormatName];
     
     NSInteger photosPerRow = [FICDPhotosTableViewCell photosPerRow];
@@ -522,36 +452,6 @@ static BOOL _FICDImageIsLight(UIImage *image) {
     if (alertView == _noImagesAlertView) {
         [NSThread exit];
     }
-}
-
-#pragma mark - FICDPhotosTableViewCellDelegate
-
-- (void)photosTableViewCell:(FICDPhotosTableViewCell *)photosTableViewCell didSelectPhoto:(FICDPhoto *)photo withImageView:(UIImageView *)imageView {
-    [[FICDFullscreenPhotoDisplayController sharedDisplayController] showFullscreenPhoto:photo forImageFormatName:_imageFormatName withThumbnailImageView:imageView];
-}
-
-#pragma mark - FICDFullscreenPhotoDisplayControllerDelegate
-
-- (void)photoDisplayController:(FICDFullscreenPhotoDisplayController *)photoDisplayController willShowSourceImage:(UIImage *)sourceImage forPhoto:(FICDPhoto *)photo withThumbnailImageView:(UIImageView *)thumbnailImageView {
-    // If we're running on iOS 7, we'll try to intelligently determine whether the photo contents underneath the status bar is light or dark.
-    if ([self respondsToSelector:@selector(preferredStatusBarStyle)]) {
-        if (_usesImageTable) {
-            [[FICImageCache sharedImageCache] retrieveImageForEntity:photo withFormatName:FICDPhotoPixelImageFormatName completionBlock:^(id<FICEntity> entity, NSString *formatName, UIImage *image) {
-                if (image != nil && [photoDisplayController isDisplayingPhoto]) {
-                    [self _updateStatusBarStyleForColorAveragedImage:image];
-                }
-            }];
-        } else {
-            UIImage *colorAveragedImage = _FICDColorAveragedImageFromImage(sourceImage);
-            [self _updateStatusBarStyleForColorAveragedImage:colorAveragedImage];
-        }
-    } else {
-        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
-    }
-}
-
-- (void)photoDisplayController:(FICDFullscreenPhotoDisplayController *)photoDisplayController willHideSourceImage:(UIImage *)sourceImage forPhoto:(FICDPhoto *)photo withThumbnailImageView:(UIImageView *)thumbnailImageView {
-    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
 }
 
 #pragma mark - NSObject (NSKeyValueObserving)
