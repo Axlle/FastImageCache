@@ -52,6 +52,9 @@
                         }
                     }];
                 } else {
+                    if (![photo thumbnailImageExists]) {
+                        [photo generateThumbnail];
+                    }
                     [imageView setImage:[photo thumbnailImage]];
                 }
             } else {

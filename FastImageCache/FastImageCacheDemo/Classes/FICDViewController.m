@@ -57,6 +57,12 @@
             }
 
             _photos = photos;
+
+            // Clear both caches
+            for (FICDPhoto *photo in photos) {
+                [photo deleteThumbnail];
+            }
+            [[FICImageCache sharedImageCache] reset];
         } else {
             NSString *title = @"No Source Images";
             NSString *message = @"There are no JPEG images in the Demo Images folder. Please run the fetch_demo_images.sh script, or add your own JPEG images to this folder before running the demo app.";
