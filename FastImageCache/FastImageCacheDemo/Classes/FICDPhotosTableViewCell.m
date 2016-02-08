@@ -44,7 +44,8 @@
                 FICDPhoto *photo = [_photos objectAtIndex:i];
 
                 if (_usesImageTable) {
-                    [[FICImageCache sharedImageCache] retrieveImageForEntity:photo withFormatName:_imageFormatName completionBlock:^(id<FICEntity> entity, NSString *formatName, UIImage *image) {
+                    [imageView setImage:nil];
+                    [[FICImageCache sharedImageCache] asynchronouslyRetrieveImageForEntity:photo withFormatName:_imageFormatName completionBlock:^(id<FICEntity> entity, NSString *formatName, UIImage *image) {
                         // This completion block may be called much later. We should check to make sure this cell hasn't been reused for different photos before displaying the image that has loaded.
                         if (photos == [self photos]) {
                             [imageView setImage:image];

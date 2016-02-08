@@ -69,6 +69,8 @@
     FICImageCache *sharedImageCache = [FICImageCache sharedImageCache];
     [sharedImageCache setDelegate:self];
     [sharedImageCache setFormats:mutableImageFormats];
+
+    [sharedImageCache reset];
     
     // Configure the window
     CGRect windowFrame = [[UIScreen mainScreen] bounds];

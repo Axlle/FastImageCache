@@ -48,16 +48,14 @@
         
         if ([imageURLs count] > 0) {
             NSMutableArray *photos = [[NSMutableArray alloc] init];
-            for (NSURL *imageURL in imageURLs) {
+
+            // Create lots of photos to scroll through
+            for (int i = 0; i < 5000; i++) {
                 FICDPhoto *photo = [[FICDPhoto alloc] init];
-                [photo setSourceImageURL:imageURL];
+                [photo setSourceImageURL:imageURLs[i % imageURLs.count]];
                 [photos addObject:photo];
             }
-            
-            while ([photos count] < 5000) {
-                [photos addObjectsFromArray:photos]; // Create lots of photos to scroll through
-            }
-            
+
             _photos = photos;
         } else {
             NSString *title = @"No Source Images";
@@ -176,12 +174,6 @@
 #pragma mark - Reloading Data
 
 - (void)reloadTableViewAndScrollToTop:(BOOL)scrollToTop {
-    UIApplication *sharedApplication = [UIApplication sharedApplication];
-    
-    // Don't allow interaction events to interfere with thumbnail generation
-    if ([sharedApplication isIgnoringInteractionEvents] == NO) {
-        [sharedApplication beginIgnoringInteractionEvents];
-    }
 
     if (scrollToTop) {
         // If the table view isn't already scrolled to top, we do that now, deferring the actual table view reloading logic until the animation finishes.
@@ -215,65 +207,9 @@
         _usesImageTable = _selectedMethodSegmentControlIndex == 1;
         
         [[self navigationController] setToolbarHidden:(_usesImageTable == NO) animated:YES];
-        
-        dispatch_block_t tableViewReloadBlock = ^{
-            [_tableView reloadData];
-            [_tableView resetScrollingPerformanceCounters];
-            
-            if ([_tableView isHidden]) {
-                [[_tableView layer] addAnimation:[CATransition animation] forKey:kCATransition];
-            }
-            
-            [_tableView setHidden:NO];
-            
-            // Re-enable interaction events once every thumbnail has been generated
-            if ([sharedApplication isIgnoringInteractionEvents]) {
-                [sharedApplication endIgnoringInteractionEvents];
-            }
-        };
-        
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-            // In order to make a fair comparison for both methods, we ensure that the cached data is ready to go before updating the UI.
-            if (_usesImageTable) {
-                _callbackCount = 0;
-                NSSet *uniquePhotos = [NSSet setWithArray:_photos];
-                for (FICDPhoto *photo in uniquePhotos) {
-                    CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
-                    FICImageCache *sharedImageCache = [FICImageCache sharedImageCache];
-                    
-                    if ([sharedImageCache imageExistsForEntity:photo withFormatName:_imageFormatName] == NO) {
-                        if (_callbackCount == 0) {
-                            NSLog(@"*** FIC Demo: Fast Image Cache: Generating thumbnails...");
-                            
-                            // Hide the table view's contents while we generate new thumbnails
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                [_tableView setHidden:YES];
-                                [[_tableView layer] addAnimation:[CATransition animation] forKey:kCATransition];
-                            });
-                        }
-                        
-                        _callbackCount++;
-                        
-                        [sharedImageCache asynchronouslyRetrieveImageForEntity:photo withFormatName:_imageFormatName completionBlock:^(id<FICEntity> entity, NSString *formatName, UIImage *image) {
-                            _callbackCount--;
-                            
-                            if (_callbackCount == 0) {
-                                NSLog(@"*** FIC Demo: Fast Image Cache: Generated thumbnails in %g seconds", CFAbsoluteTimeGetCurrent() - startTime);
-                                dispatch_async(dispatch_get_main_queue(), tableViewReloadBlock);
-                            }
-                        }];
-                    }
-                }
-                
-                if (_callbackCount == 0) {
-                    dispatch_async(dispatch_get_main_queue(), tableViewReloadBlock);
-                }
-            } else {
-                [self _generateConventionalThumbnails];
-                
-                dispatch_async(dispatch_get_main_queue(), tableViewReloadBlock);
-            }
-        });
+
+        [_tableView reloadData];
+        [_tableView resetScrollingPerformanceCounters];
     }
 }
 
@@ -307,39 +243,6 @@
     }
     
     [self reloadTableViewAndScrollToTop:NO];
-}
-
-#pragma mark - Working with Thumbnails
-
-- (void)_generateConventionalThumbnails {
-    BOOL neededToGenerateThumbnail = NO;
-    CFAbsoluteTime startTime = 0;
-    
-    NSSet *uniquePhotos = [NSSet setWithArray:_photos];
-    for (FICDPhoto *photo in uniquePhotos) {
-        if ([photo thumbnailImageExists] == NO) {
-            if (neededToGenerateThumbnail == NO) {
-                NSLog(@"*** FIC Demo: Conventional Method: Generating thumbnails...");
-                startTime = CFAbsoluteTimeGetCurrent();
-                
-                neededToGenerateThumbnail = YES;
-                
-                // Hide the table view's contents while we generate new thumbnails
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [_tableView setHidden:YES];
-                    [[_tableView layer] addAnimation:[CATransition animation] forKey:kCATransition];
-                });
-            }
-            
-            @autoreleasepool {
-                [photo generateThumbnail];
-            }
-        }
-    }
-    
-    if (neededToGenerateThumbnail) {
-        NSLog(@"*** FIC Demo: Conventional Method: Generated thumbnails in %g seconds", CFAbsoluteTimeGetCurrent() - startTime);
-    }
 }
 
 #pragma mark - Displaying the Average Framerate
